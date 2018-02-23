@@ -1,0 +1,277 @@
+---
+output: word_document
+  # word_document:
+  #   reference_docx: "data-inventory-format-reference.docx"
+fontfamily: Times New Roman
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r libraries, include=FALSE}
+library(tidyverse)
+library(xml2)
+library(httr)
+library(tools)
+library(pander)
+# library(knitr)
+```
+
+
+```{r pastaQuery, include=FALSE}
+
+pastaQuery <- function(qr) {
+
+  queryResult <- GET("https://pasta.lternet.edu/package/search/eml", query = list(defType='edismax',
+                                                                                  q=qr,
+                                                                                  fq="scope:(knb-lter-cap)",
+                                                                                  fq="-scope:ecotrends",
+                                                                                  fq="-scope:lter-landsat*",
+                                                                                  fl='*', sort="score,desc",
+                                                                                  sort="packageid,asc",
+                                                                                  debug="false",
+                                                                                  start="0",
+                                                                                  rows="1000"))
+  
+  
+  # PASTA+ query results to tibble
+  
+  parsedContent <- content(queryResult, 'parsed', encoding="UTF-8") # yields class "xml_document" "xml_node"
+  
+  xmlContents <- xml_contents(parsedContent)
+  
+  # authors
+  
+  rows <- parsedContent %>%
+    xml_find_all(".//document/authors") %>%
+    map(~ xml_find_all(.x, xpath = "author"))
+  
+  
+  rows_df <- data_frame(row = seq_along(rows),nodeset = rows)
+  
+  cells_df <- rows_df %>%
+    mutate(col_name_raw = nodeset %>% map(~ xml_name(.)),
+           cell_text = nodeset %>% map(~ xml_text(.)),
+           i = nodeset %>% map(~ seq_along(.))) %>%
+    select(row, i, col_name_raw, cell_text) %>%
+    unnest()
+  
+  # need to convert authors format to Last, F. M.
+  cells_df <- cells_df %>% 
+    mutate(cell_text = gsub(",", "", cell_text)) %>% 
+    separate(cell_text, c("last", "first", "middle"), sep = "\\s", remove = T) %>% 
+    mutate(
+      # trim whitespace
+      last = str_trim(last, side = c("both")),
+      first = str_trim(first, side = c("both")),
+      middle = str_trim(middle, side = c("both")),
+      # first and middle to initial
+      first = str_extract(first, "[A-z]{1,1}"),
+      middle = str_extract(middle, "[A-z]{1,1}")
+    ) %>% 
+    mutate(
+      cell_text = case_when(
+        (i >= 2 & is.na(middle)) ~ paste0(first, ". ", last),
+        (i >= 2 & !is.na(middle)) ~ paste0(first, ". ", middle, ". ", last),
+        (i == 1 & is.na(middle)) ~ paste0(last, " ", first, "."),
+        (i == 1 & !is.na(middle)) ~ paste0(last, " ", first, ". ", middle, ".")
+      )
+    ) %>%
+    select(-last, -first, -middle)
+  
+  auth_cast <- cells_df %>%
+    group_by(row) %>%
+    summarise(auths = paste(cell_text, collapse = ", "))
+  
+  
+  # keywords
+  
+  rows <- parsedContent %>%
+    xml_find_all(".//document/keywords") %>%
+    map(~ xml_find_all(.x, xpath = "keyword"))
+  
+  rows_df <- data_frame(row = seq_along(rows),
+                        nodeset = rows)
+  
+  cells_df <- rows_df %>%
+    mutate(col_name_raw = nodeset %>% map(~ xml_name(.)),
+           cell_text = nodeset %>% map(~ xml_text(.)),
+           i = nodeset %>% map(~ seq_along(.))) %>%
+    select(row, i, col_name_raw, cell_text) %>%
+    unnest()
+  
+  # associate keyword with CRA
+  cells_df <- cells_df %>% 
+    mutate(
+      cell_text = tolower(cell_text),
+      # these are mapping to the LTER core areas but Dan wants to use a CAP'ified version of these (below)
+      # CRA = case_when(
+      #   grepl("primary production", cell_text, ignore.case = T) ~ "PP",
+      #   grepl("population", cell_text, ignore.case = T) ~ "PS",
+      #   grepl("movement of \\borganic\\b", cell_text, ignore.case = T) ~ "MoOM",
+      #   grepl("movement of \\binorganic\\b", cell_text, ignore.case = T) ~ "MoIM",
+      #   grepl("disturbance", cell_text, ignore.case = T) ~ "DP",
+      #   grepl("landuse|land-use|land use", cell_text, ignore.case = T) ~ "LULCC",
+      #   grepl("\\bhuman-environment\\b|\\bhuman environment\\b", cell_text, ignore.case = T) ~ "HEI" # also matched 'human environment feedback'
+      # )) %>% 
+      # CAP'ified core areas
+      # PP ~ Primary Production
+      # PC ~ Population and Communities
+      # OMD ~ Organic Matter Dynamics
+      # ND ~ Nutrient Dynamics
+      # DP ~ Disturbance Processes
+      # LULCC ~ LULCC
+      # SESD ~ Social-Ecological Systems Dynamics (LTER::Human Environment Interactions)
+      CRA = case_when(
+        grepl("primary production", cell_text, ignore.case = T) ~ "PP",
+        grepl("population", cell_text, ignore.case = T) ~ "PC",
+        grepl("movement of \\borganic\\b", cell_text, ignore.case = T) ~ "OMD",
+        grepl("movement of \\binorganic\\b", cell_text, ignore.case = T) ~ "ND",
+        grepl("disturbance", cell_text, ignore.case = T) ~ "DP",
+        grepl("landuse|land-use|land use", cell_text, ignore.case = T) ~ "LULCC",
+        grepl("\\bhuman-environment\\b|\\bhuman environment\\b", cell_text, ignore.case = T) ~ "SESD" # also matched 'human environment feedback'
+      )) %>% 
+    filter(!is.na(CRA)) %>%
+    distinct(row, CRA) %>%
+    group_by(row) %>% 
+    mutate(
+      i = seq_along(row),
+      col_name_raw = "keyword"
+      ) %>% 
+    select(row, i, col_name_raw, CRA)
+  
+  key_cast <- cells_df %>%
+    group_by(row) %>%
+    summarise(keys = paste(CRA, collapse = ", "))
+  
+  # put it all together
+  
+  queryResultTibble <-
+    tibble( 
+      packageid = xmlContents %>% xml_find_all("packageid") %>% xml_text(),
+      title = xmlContents %>% xml_find_all("title") %>% xml_text(),
+      # we only need the org for cases when the author is not an individual, so,
+      # for those, we can use xml_find_first on the parsedContent sensu below
+      orgs = parsedContent %>% xml_find_all(".//document") %>% xml_find_first("organizations") %>% xml_text(),
+      pubdate = xmlContents %>% xml_find_all("pubdate") %>% xml_text(),
+      dates = paste(xmlContents %>% xml_find_all("begindate") %>% xml_text(), " to ", xmlContents %>% xml_find_all("enddate") %>% xml_text()),
+      doi = paste(xmlContents %>% xml_find_all("doi") %>% xml_text())) %>%
+    rowid_to_column('row') %>%
+    left_join(auth_cast, by = c('row')) %>%
+    left_join(key_cast, by = c('row')) %>%
+    mutate(sort_column = as.numeric(str_extract(packageid, "\\d+\\.\\d+"))) %>% 
+    arrange(sort_column) %>% 
+    select(PackageID = packageid,
+           Title = title,
+           CRAs = keys,
+           Originators = auths,
+           Orgs = orgs,
+           # Dates = dates, # not needed
+           DOI = doi,
+           pubd = pubdate) %>% 
+    mutate(Title = gsub("\n\\s{2,}", " ", Title))
+  
+  return (queryResultTibble)
+  
+}
+
+```
+
+
+```{r query_cap_datasets, include=FALSE}
+
+capData <- pastaQuery("*:*")
+
+```
+
+
+```{r format_table, include=FALSE}
+
+# Childers D., N. Grimm, D. Hope, J. Kaye, C. Martin, N. McIntyre, J. Stutz. 2018. Ecological Survey of Central Arizona: a survey of key ecological indicators in the greater Phoenix metropolitan area and surrounding Sonoran desert, ongoing since 1999. Environmental Data Initiative. http://dx.doi.org/10.6073/pasta/0669ee6a71b24abb1ae3827f4ee77f6d. Dataset accessed 2/21/2018.
+
+formatted_data <- capData %>% 
+  mutate(
+    dataset_auths = case_when(
+      is.na(Originators) ~ Orgs,
+      !is.na(Originators) ~ Originators
+    ), # when there is not an author, use the org for the author
+    citation = paste0(dataset_auths, ". ", pubd, ". ", Title, ". Environmental Data Initiative. ", DOI, ".")
+  ) %>% 
+  select(PackageID, citation, CRAs) %>% 
+  mutate(
+    citation = gsub("\\.\\.", "\\.", citation), # fix double-period in single-author datasets
+    citation = gsub("\\. \\.", "\\.", citation), # fix period-space-period in some datasets
+    CRAs = ifelse(grepl("E-Atlas", citation), NA, CRAs) # remove core area from the E-Atlas datasets
+  )
+
+```
+
+```{r dataset_tweaks, include=FALSE}
+
+vetted_data <- formatted_data %>% 
+  mutate(
+    CRAs = ifelse(grepl("143", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("223", PackageID), "LULCC", CRAs),
+    CRAs = ifelse(grepl("245", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("247", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("269", PackageID), "DP", CRAs),
+    CRAs = ifelse(grepl("270", PackageID), "OMD", CRAs),
+    CRAs = ifelse(grepl("271", PackageID), "OMD", CRAs),
+    CRAs = ifelse(grepl("273", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("274", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("278", PackageID), sub("LULCC, ", "", CRAs), CRAs),
+    CRAs = ifelse(grepl("280", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("282", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("285", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("289", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("295", PackageID), "ND", CRAs),
+    CRAs = ifelse(grepl("344", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("366", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("368", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("378", PackageID), "LULCC", CRAs),
+    CRAs = ifelse(grepl("563", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("569", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("571", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("584", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("617", PackageID), sub("DP, ", "", CRAs), CRAs),
+    CRAs = ifelse(grepl("618", PackageID), "ND", CRAs),
+    CRAs = ifelse(grepl("628", PackageID), "SESD, DP, PC, PP, ND, OMD", CRAs),
+    CRAs = ifelse(grepl("631", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("634", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("635", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("636", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("637", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("Lerman", citation), "SESD", CRAs),
+    CRAs = ifelse(grepl("641", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("642", PackageID), "PC, SESD", CRAs),
+    CRAs = ifelse(grepl("643", PackageID), "PC", CRAs),
+    CRAs = ifelse(grepl("644", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("645", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("646", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("647", PackageID), "SESD", CRAs),
+    CRAs = ifelse(grepl("648", PackageID), "ND, LULCC", CRAs),
+    CRAs = ifelse(grepl("649", PackageID), NA, CRAs),
+    CRAs = ifelse(grepl("652", PackageID), paste0(CRAs, ", PC"), CRAs),
+    CRAs = ifelse(grepl("653", PackageID), paste0(CRAs, ", PC"), CRAs)
+  )
+```
+
+
+```{r generate_table, message=FALSE, results='asis', echo=FALSE}
+
+# write_csv(capData, '~/Desktop/CAP_data_inventory.csv', na = "")
+# 
+# Table X. Inventory of CAP LTER generated datasets housed in the LTER Network data repository hosted by the Environmental Data Initiative. The most relevant LTER Core Research Area(s) are noted (PP = Primary Production; PS = Population Studies; MoOM = Movement of Organic Matter; MoIM = Movement of Inorganic Matter; DP = Disturbance Patterns; LULC = Land Use and Land Cover Change; HEI = Human-Environment Interactions).
+
+# kable(formatted_data)
+# pandoc.table(schedule, justify = c('left', 'left', 'left', 'left', 'left'))
+# pandoc.table(schedule, split.cells = c(5, 10, 5, 10, 10))
+
+set.alignment('left')
+pandoc.table(vetted_data, split.table = Inf, missing = "")
+
+```
+
