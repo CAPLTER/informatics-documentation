@@ -17,6 +17,7 @@ library(xml2)
 library(httr)
 library(tools)
 library(pander)
+library(rcrossref)
 # library(knitr)
 ```
 
@@ -190,7 +191,13 @@ capData <- pastaQuery("*:*")
 
 ```{r format_table, include=FALSE}
 
-# Childers D., N. Grimm, D. Hope, J. Kaye, C. Martin, N. McIntyre, J. Stutz. 2018. Ecological Survey of Central Arizona: a survey of key ecological indicators in the greater Phoenix metropolitan area and surrounding Sonoran desert, ongoing since 1999. Environmental Data Initiative. http://dx.doi.org/10.6073/pasta/0669ee6a71b24abb1ae3827f4ee77f6d. Dataset accessed 2/21/2018.
+# example EDI citation that we will match:
+# Childers D., N. Grimm, D. Hope, J. Kaye, C. Martin, N. McIntyre, J. Stutz.
+# 2018. Ecological Survey of Central Arizona: a survey of key ecological
+# indicators in the greater Phoenix metropolitan area and surrounding Sonoran
+# desert, ongoing since 1999. Environmental Data Initiative.
+# http://dx.doi.org/10.6073/pasta/0669ee6a71b24abb1ae3827f4ee77f6d. Dataset
+# accessed 2/21/2018.
 
 formatted_data <- capData %>% 
   mutate(
@@ -210,6 +217,8 @@ formatted_data <- capData %>%
 ```
 
 ```{r dataset_tweaks, include=FALSE}
+
+# manually edit CRAs as appropriate
 
 vetted_data <- formatted_data %>% 
   mutate(
@@ -327,19 +336,50 @@ vetted_data <- formatted_data %>%
   )
 ```
 
+```{r reference_pubs, include=FALSE}
+
+# Add the CAP Top Ten publications to the relevant datasets. Some of the results
+# returned by rcrossref have the wrong year or, in the case of Jenerette,
+# bizarre text in the list of authors, so these need to be checked and edited in
+# the output.
+
+data_and_pubs <- vetted_data %>% 
+  mutate(
+    citation = ifelse(grepl("41.13", PackageID), paste0(citation, cr_cn("10.1890/11-0828.1", "text")), citation), # Bang et al 2012
+    citation = ifelse(grepl("571", PackageID), paste0(citation, cr_cn("10.1890/11-0828.1", "text")), citation), # Bang et al 2012
+    citation = ifelse(grepl("46.15", PackageID), paste0(citation, cr_cn("10.1016/j.landurbplan.2016.09.026", "text")), citation), # Banville et al 2017
+    citation = ifelse(grepl("620", PackageID), paste0(citation, cr_cn("10.1007/s10980-015-0284-3", "text")), citation), # Jenerette et al 2016
+    citation = ifelse(grepl("624", PackageID), paste0(citation, cr_cn("10.1007/s10021-014-9812-2", "text")), citation), # Hale et al 2015
+    citation = ifelse(grepl("628", PackageID), paste0(citation, cr_cn("10.1002/eco.1457", "text")), citation), # Volo et al 2014
+    citation = ifelse(grepl("632", PackageID), paste0(citation, cr_cn("10.1890/10-0758.1", "text")), citation), # Hall et al 2011
+    citation = ifelse(grepl("633", PackageID), paste0(citation, cr_cn("10.1002/ecs2.1756", "text")), citation), # Bois et al 
+    citation = ifelse(grepl("652", PackageID), paste0(citation, cr_cn("10.1002/ecs2.1826", "text")), citation), # Ripplinger et al 2017
+    citation = ifelse(grepl("653", PackageID), paste0(citation, cr_cn("10.1002/ecs2.1826", "text")), citation) # Ripplinger et al 2017
+  )
+  
+```
+
 
 ```{r generate_table, message=FALSE, results='asis', echo=FALSE}
 
-# write_csv(capData, '~/Desktop/CAP_data_inventory.csv', na = "")
-# 
-# Table X. Inventory of CAP LTER generated datasets housed in the LTER Network data repository hosted by the Environmental Data Initiative. The most relevant LTER Core Research Area(s) are noted (PP = Primary Production; PS = Population Studies; MoOM = Movement of Organic Matter; MoIM = Movement of Inorganic Matter; DP = Disturbance Patterns; LULC = Land Use and Land Cover Change; HEI = Human-Environment Interactions).
+# Table XYZ. Inventory of CAP LTER datasets housed in the LTER Network data
+# repository hosted by the Environmental Data Initiative as of 2018-02-27. Where
+# applicable, one or more relevant LTER Core Research Area(s) (CRAs) are noted
+# (PP = Primary Production; PC = Populations and Communities; OMD = Organic
+# Matter Dynamics; ND = Nutrient Dynamics; DP = Disturbance Patterns; LULCC =
+# Land Use and Land Cover Change; SESD = Social-Ecological Systems Dynamics).
+# Datasets that contributed to CAP's Top Ten publications are noted with the
+# literature citation included with the dataset citation, but note that two of
+# CAP's Top Ten publications Cook et al. 2012 and Zhang et al. are not featured
+# in this inventory of datasets as the former is a literature review and the
+# latter is model output.
 
 # kable(formatted_data)
 # pandoc.table(schedule, justify = c('left', 'left', 'left', 'left', 'left'))
 # pandoc.table(schedule, split.cells = c(5, 10, 5, 10, 10))
 
 set.alignment('left')
-pandoc.table(vetted_data, split.table = Inf, missing = "")
+pandoc.table(data_and_pubs, split.table = Inf, missing = "")
 
 ```
 
