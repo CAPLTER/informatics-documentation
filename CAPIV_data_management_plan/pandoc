@@ -1,0 +1,1 @@
+pandoc -f markdown -t docx --reference-doc=custom-reference.docx ~/Dropbox/development/CAPIV_data_management_plan.md -s -o DMP.docx
