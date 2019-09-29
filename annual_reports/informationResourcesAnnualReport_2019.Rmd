@@ -1,0 +1,14 @@
+---
+output: word_document
+---
+
+Impact on Information Resources
+
+The CAP LTER added seven new data sets to its publicly available data holdings during the reporting year, bringing the total number of project data sets archived with the Environmental Data Initiative (EDI) to 201. New data sets of note feature bioclimatic measurements for the central-Arizona region derived from NASA Earth Science Data and Information System Daily Surface Weather and Climatological Summaries (DAYMET). These new data sets are a valuable resource to developing species distribution models, and conducting interdisciplinary studies of urban environments. Another climate-related data set features a Social Vulnerability Index (SoVI) and a specific hazards Heat Vulnerability Index (HVI) computed for 358 census tracts in the City of Phoenix. All CAP LTER data set metadata are encoded in the XML-based Ecological Metadata Language (EML), with data and metadata available through the CAP LTER data catalog on the project website, the EDI data portal, and DataONE.
+
+The CAP LTER Information Manager and Julie Ann Wrigley Global Institute of Sustainability (GIOS) informatics team strive continuously to improve the presentation, utility, and management of CAP LTER information resources. Notable improvements for this reporting year include:
+
+* The current (S. Earl) and former (P. Tarrant) CAP LTER Information Managers taught a course on research data management at Arizona State University in the spring of 2018. This course provided graduate students, including students actively involved with the CAP LTER, with a greater awareness of the importance of data curation, and the skills and tools needed to more effectively manage their research data.
+* The GIOS informatics team implemented a new data portal for the Julie Ann Wrigley Global Institute of Sustainability (GIOS) that utilizes the EDI's PASTA+ framework. This new data portal provides a gateway to CAP LTER data and rich metadata archived with the EDI, and, ultimately, will provide a more efficient system for presenting CAP LTER data on a local (i.e., CAP LTER website) data catalog.
+ 
+The CAP LTER is committed to making a strong contribution to informatics within the LTER Network and the ecological sciences generally. The CAP LTER Information Manager (S. Earl) participates in all network information meetings and activities, and co-chairs the LTER Information Management Executive Committee (IM Exec). In addition, S. Earl is an information manager on a NCEAS Synthesis Working Group studying Soil Organic Matter dynamics, and contributed to numerous scientific presentations and publications.
