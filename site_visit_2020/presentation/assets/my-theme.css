@@ -1,0 +1,51 @@
+.light-grey {
+  color: #C8C8C8;
+}
+.light-blue {
+  color: #71A3C3;
+}
+.small {
+  font-size: 85%
+}
+.less-left {
+  float: left;
+  width: 30%;
+}
+.more-right {
+  float: right;
+  width: 65%;
+}
+code.r{
+  font-size: 14px;
+}
+.title-slide {
+  background-image: url(figures/template.png);
+  background-size: cover;
+}
+.title-slide h1 {
+  text-align: left;
+  font-size: 40px;
+  margin-top: -35%;
+  color: #8B4513;
+}
+.title-slide h3:nth-of-type(1) {
+  text-align: left;
+  font-size: 30px;
+}
+.remark-slide-number {
+  font-size: 10pt;
+  margin-bottom: -3px;
+  margin-right: 90%;
+  color: #FFFFFF; /* white */
+  opacity: 0.5;
+}
+.slide-title-font {
+  text-align: left;
+  font-weight: bold;
+  font-size: 130%;
+}
+.image-border {
+  border-width: 3px;
+  border-color: #2e73b7;
+  border-style: solid;
+}
