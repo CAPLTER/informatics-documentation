@@ -14,7 +14,7 @@ Steps to install and run counter:
   pip3 install psycopg2
   export PATH="$HOME/.local/bin:$PATH"
   pip3 install .
-  counter -s "2020-01-01T00:00:00" -e "2020-05-01T00:00:00" knb-lter-cap "uid=CAP,o=LTER,dc=ecoinformatics,dc=org:CAP1CAP"
-  counter -s "2019-01-01T00:00:00" -e "2019-12-31T00:00:00" -c knb-lter-cap "uid=CAP,o=LTER,dc=ecoinformatics,dc=org:CAP1CAP"
-  counter -s "2018-01-01T00:00:00" -e "2018-12-31T23:59:00" -c knb-lter-cap "uid=CAP,o=LTER,dc=ecoinformatics,dc=org:CAP1CAP"
+  counter -s "2020-01-01T00:00:00" -e "2020-05-01T00:00:00" knb-lter-cap "uid=CAP,o=LTER,dc=ecoinformatics,dc=org:password"
+  counter -s "2019-01-01T00:00:00" -e "2019-12-31T00:00:00" -c knb-lter-cap "uid=CAP,o=LTER,dc=ecoinformatics,dc=org:password"
+  counter -s "2018-01-01T00:00:00" -e "2018-12-31T23:59:00" -c knb-lter-cap "uid=CAP,o=LTER,dc=ecoinformatics,dc=org:password"
 ```
