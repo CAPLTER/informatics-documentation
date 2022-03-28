@@ -1,0 +1,59 @@
+---
+title: false
+output: word_document
+date: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(flextable)
+```
+
+```{r echo=FALSE}
+
+datasets <- readr::read_csv("cap_datasets.csv") |>
+  dplyr::mutate(
+    ordering = stringr::str_extract(package, "[0-9]+"),
+    ordering = as.integer(ordering)
+    ) |>
+  dplyr::arrange(ordering) |>
+  dplyr::select(
+    `dataset id`       = package,
+    `dataset citation` = citation,
+    `CRA`              = core_area
+  )
+
+```
+
+### Supplementary Document: List of datasets deposited into the EDI
+
+CAP LTER datasets available through the Environmental Data Initiative (EDI) data repository. Table columns include a) the EDI Data Package Identifier; b) dataset citation, including dataset creator(s), year of (most recent) publication to EDI, title, current version, and DOI; and c) associated Core Research Area(s): PP=primary production, PC=population/community dynamics, ND=nutrient dynamics, OM=organic matter dynamics, D=disturbance, LU=land use/land cover change, SES=social-ecological systems dynamics. Datasets that have contributed to CAP's Top Ten publications (see II. Intellectual Merit: Results of Prior Support) are highlighted.
+
+```{r flextable, echo=FALSE}
+
+table_caption <- "CAP LTER datasets available through the Environmental Data Initiative (EDI) data repository. Table columns include a) the EDI Data Package Identifier; b) dataset citation, including dataset creator(s), year of (most recent) publication to EDI, title, current version, and DOI; and c) associated Core Research Area(s): PP=primary production, PC=population/community dynamics, ND=nutrient dynamics, OM=organic matter dynamics, D=disturbance, LU=land use/land cover change, SES=social-ecological systems dynamics. Datasets that have contributed to CAP's Top Ten publications (see II. Intellectual Merit: Results of Prior Support) are highlighted."
+
+datasets |>
+  flextable() |>
+  align(part = "all") |> # left align
+  # set_caption(
+  #   caption = table_caption,
+  #   style = "Table Caption"
+  #   ) |>
+  font(fontname = "Arial (Body)", part = "all") |>
+  fontsize(size = 10, part = "all") |>
+  # set_table_properties(layout = "autofit", width = 1) |>
+  width(j = c(1,2,3), width = c(1.8,5,1)) |>
+  valign(valign = "top", part = "body") |>
+  # highlight top ten
+  bg(
+    i = grepl(
+      pattern = "\\.46\\.|\\.650\\.|\\.667\\.|\\.630\\.|\\.633\\.|\\.278\\.|\\.652\\.|\\.642\\.|\\.560\\.|\\.631\\.|\\.632\\.",
+      x = datasets$`dataset id`,
+      ignore.case = TRUE
+      ),
+    j = c(1, 2, 3),
+    bg = "wheat",
+    part = "body"
+    )
+```
