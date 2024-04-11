@@ -77,8 +77,8 @@ safely ignore references to the LTER and CAP LTER.
 ### metadata template instructions
 
 The metadata template is a Google Sheet/Excel workbook oriented toward
-the (Ecological Metadata
-Language)\[https://eml.ecoinformatics.org/eml-ecological-metadata-language\],
+the [Ecological Metadata
+Language](https://eml.ecoinformatics.org/eml-ecological-metadata-language),
 the metadata standard for the LTER network and widely used in the earth
 and environmental sciences.
 

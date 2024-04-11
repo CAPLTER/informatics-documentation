@@ -4,27 +4,27 @@ author: CAP LTER Information Manager
 date: today
 thanks: thanks to the BLE and MSP LTERs for source materials and inspiration
 format:
- gfm:
-   toc: true
-   toc-depth: 4
-   number-sections: false
-   mainfont: LiberationSans
-   fontsize: "11"
-  # pdf:
-  #   toc: true
-  #   toc-depth: 4
-  #   number-sections: false
-  #   colorlinks: true
-  #   pdf-engine: pdflatex
-  #   mainfont: LiberationSans
-  #   fontsize: "11"
+ # gfm:
+ #   toc: true
+ #   toc-depth: 4
+ #   number-sections: false
+ #   mainfont: LiberationSans
+ #   fontsize: "11"
+  pdf:
+    toc: true
+    toc-depth: 4
+    number-sections: false
+    colorlinks: true
+    pdf-engine: pdflatex
+    mainfont: LiberationSans
+    fontsize: "11"
 ---
 
 ### overview
 
 LTER-funded research requires that data are made publicly available within two years of collection. The CAP LTER Information Manager will help you to meet that deadline by making sure your data are formatted intuitively, described properly with metadata, and by submitting the data and metadata (a "data package") to an appropriate data repository. Contact the CAP LTER Information Manager if you would like to discuss how to organize your data into logical datasets.
 
-The Environmental Data Initiative provides a good [overview ](https://edirepository.org/resources/resources-for-data-authors) of the data publishing process.
+The Environmental Data Initiative provides a good [overview](https://edirepository.org/resources/resources-for-data-authors) of the data publishing process.
 
 The language in these instructions and associated metadata templates is oriented to CAP LTER data submissions, but most elements are generic and researchers providing data not associated with CAP LTER research can safely ignore references to the LTER and CAP LTER.
 
@@ -53,7 +53,7 @@ The language in these instructions and associated metadata templates is oriented
 
 ### metadata template instructions
 
-The metadata template is a Google Sheet/Excel workbook oriented toward the (Ecological Metadata Language)[https://eml.ecoinformatics.org/eml-ecological-metadata-language], the metadata standard for the LTER network and widely used in the earth and environmental sciences. 
+The metadata template is a Google Sheet/Excel workbook oriented toward the [Ecological Metadata Language](https://eml.ecoinformatics.org/eml-ecological-metadata-language), the metadata standard for the LTER network and widely used in the earth and environmental sciences. 
 
 About the template workbook:
 
